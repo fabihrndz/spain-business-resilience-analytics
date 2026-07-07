@@ -1,5 +1,5 @@
 id_medida,nombre_medida
-1,Índice
-2,Variación mensual
-3,Variación anual
-4,Variación en lo que va de año
+1,indice
+2,variacion_mensual
+3,variacion_anual
+4,variacion_en_lo_que_va_de_ano
