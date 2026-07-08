@@ -2,13 +2,8 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine, text
 import logging
-import requests
+
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)s %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
 
 def get_connection_string(db_name=None, user=None, password=None, host=None, port=None):
     """
@@ -35,7 +30,7 @@ def create_database_if_not_exists(db_name):
     try:
         with engine_server.begin() as con:
             con.execute(text(f"CREATE DATABASE IF NOT EXISTS {db_name}"))
-            print(f"✅ Base de datos '{db_name}' verificada/creada con éxito.")
+            logger.info(f"Base de datos '{db_name}' verificada/creada con éxito.")
     finally:
         engine_server.dispose()
 
@@ -48,7 +43,7 @@ def load_dataframe_to_mysql(df, table_name, db_name, if_exists="replace"):
     
     try:
         df.to_sql(table_name, con=engine, if_exists=if_exists, index=False)
-        print(f"✅ Datos cargados exitosamente en la tabla '{table_name}'.")
+        logger.info(f"Datos cargados exitosamente en la tabla '{table_name}'.")
     finally:
         engine.dispose()
 
@@ -67,7 +62,7 @@ def set_primary_key(table_name, pk_column, db_name, data_type="INT"):
             # Primero modificamos la columna para asegurarnos que no acepte nulos
             con.execute(text(f"ALTER TABLE {table_name} MODIFY {pk_column} {data_type} NOT NULL"))
             con.execute(text(f"ALTER TABLE {table_name} ADD PRIMARY KEY ({pk_column})"))
-            print(f"✅ Clave primaria '{pk_column}' ({data_type}) asignada en '{table_name}'.")
+            logger.info(f"Clave primaria '{pk_column}' ({data_type}) asignada en '{table_name}'.")
     finally:
         engine.dispose()
 
@@ -119,10 +114,10 @@ def set_foreign_keys(fact_table, relations, db_name):
                         ON UPDATE CASCADE
                     """
                     con.execute(text(query))
-                    print(f"🔗 Relación creada: {fact_table}.{fk_column} ➡️ {dimension_table}.{pk_column}")
-                
+                    logger.info(f"Relación creada: {fact_table}.{fk_column} -> {dimension_table}.{pk_column}")
+
                 except Exception as e:
-                    print(f"❌ Error al asignar la clave foránea '{fk_column}' en {fact_table}: {e}")
+                    logger.error(f"Error al asignar la clave foránea '{fk_column}' en {fact_table}: {e}")
                     raise
     finally:
         engine.dispose()
@@ -154,13 +149,12 @@ def add_autoincrement_id(table_name, db_name):
             
             if tiene_pk:
                 con.execute(text(f"ALTER TABLE {table_name} DROP PRIMARY KEY"))
-                print(f"⚠️ Se eliminó la PK anterior de '{table_name}'.")
-            
-            # Agregamos la columna autoincremental como PK, al inicio de la tabla
+                logger.warning(f"Se eliminó la PK anterior de '{table_name}'.")
+
             con.execute(text(f"""
-                ALTER TABLE {table_name} 
+                ALTER TABLE {table_name}
                 ADD COLUMN {column_name} INT AUTO_INCREMENT PRIMARY KEY FIRST
             """))
-            print(f"✅ Columna '{column_name}' autoincremental asignada como PK en '{table_name}'.")
+            logger.info(f"Columna '{column_name}' autoincremental asignada como PK en '{table_name}'.")
     finally:
         engine.dispose()
