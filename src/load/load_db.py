@@ -124,7 +124,7 @@ def set_foreign_keys(fact_table, relations, db_name):
         
 
 
-## 4️⃣ Agregar columna ID autoincremental
+## 5️⃣ Agregar columna ID autoincremental
 def add_autoincrement_id(table_name, db_name):
     """
     Agrega una columna autoincremental como PRIMARY KEY a una tabla existente.
@@ -156,5 +156,26 @@ def add_autoincrement_id(table_name, db_name):
                 ADD COLUMN {column_name} INT AUTO_INCREMENT PRIMARY KEY FIRST
             """))
             logger.info(f"Columna '{column_name}' autoincremental asignada como PK en '{table_name}'.")
+    finally:
+        engine.dispose()
+
+
+
+# 6️⃣ Eliminar todas las tablas
+def drop_all_tables(db_name, tables):
+    """
+    Elimina todas las tablas en orden inverso al de dependencias
+    para respetar las FK. Si no existen, no falla.
+    """
+    connection_url = get_connection_string(db_name=db_name)
+    engine = create_engine(connection_url)
+ 
+    try:
+        with engine.begin() as con:
+            con.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+            for table in tables:
+                con.execute(text(f"DROP TABLE IF EXISTS {table}"))
+            con.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+            logger.info(f"Tablas eliminadas en {db_name}: {', '.join(tables)}")
     finally:
         engine.dispose()
