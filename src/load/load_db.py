@@ -168,14 +168,27 @@ def drop_all_tables(db_name, tables):
     para respetar las FK. Si no existen, no falla.
     """
     connection_url = get_connection_string(db_name=db_name)
-    engine = create_engine(connection_url)
+    
+    # Capturamos el error si la base de datos completa no existe todavía
+    try:
+        engine = create_engine(connection_url)
+        con = engine.connect()
+    except Exception as e:
+        # El error 1049 es "Unknown database". Si pasa, no hay tablas que borrar.
+        if "1049" in str(e):
+            logger.info(f"La base de datos {db_name} no existe. No hay tablas que eliminar.")
+            return
+        else:
+            raise e
  
     try:
-        with engine.begin() as con:
+        with con:
             con.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
             for table in tables:
                 con.execute(text(f"DROP TABLE IF EXISTS {table}"))
             con.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+            
+            con.commit()
             logger.info(f"Tablas eliminadas en {db_name}: {', '.join(tables)}")
     finally:
         engine.dispose()
