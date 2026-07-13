@@ -2,3 +2,5 @@ __pycache__
 .env
 files/cache
 .pytest_cache
+files/data_raw
+files/data_processed
