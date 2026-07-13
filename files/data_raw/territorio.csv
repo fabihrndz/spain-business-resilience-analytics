@@ -1,20 +1,21 @@
 id_territorio,nombre_territorio
-1,Andalucía
-2,Aragón
-3,"Asturias, Principado de"
-4,"Balears, Illes"
-5,Canarias
-6,Cantabria
-7,Castilla y León
-8,Castilla - La Mancha
-9,Cataluña
-10,Comunitat Valenciana
-11,Extremadura
-12,Galicia
-13,"Madrid, Comunidad de"
-14,"Murcia, Región de"
-15,"Navarra, Comunidad Foral de"
-16,País Vasco
-17,"Rioja, La"
-18,Ceuta
-19,Melilla
+1,Nacional
+2,Andalucía
+3,Aragón
+4,"Asturias, Principado de"
+5,"Balears, Illes"
+6,Canarias
+7,Cantabria
+8,Castilla y León
+9,Castilla - La Mancha
+10,Cataluña
+11,Comunitat Valenciana
+12,Extremadura
+13,Galicia
+14,"Madrid, Comunidad de"
+15,"Murcia, Región de"
+16,"Navarra, Comunidad Foral de"
+17,País Vasco
+18,"Rioja, La"
+19,Ceuta
+20,Melilla
