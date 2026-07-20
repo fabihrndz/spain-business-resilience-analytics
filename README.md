@@ -42,12 +42,16 @@ spain-business-resilience-analytics/
 |   +-- 06_visualizations.ipynb
 |   +-- 07_correlation.ipynb
 |   +-- 08_load.ipynb
-+-- tests/                         # Tests de validación de datos
++-- tests/                         # Tests de validación y unit tests
 |   +-- conftest.py
-|   +-- test_types.py
-|   +-- test_ranges.py
-|   +-- test_duplicates.py
-|   +-- test_fk_integrity.py
+|   +-- test_types.py               # Validación de tipos de columnas
+|   +-- test_ranges.py              # Validación de rangos de valores
+|   +-- test_duplicates.py          # Detección de duplicados
+|   +-- test_fk_integrity.py        # Integridad referencial (FK)
+|   +-- test_trans_normal.py        # Unit tests: normalizar_col
+|   +-- test_trans_str.py           # Unit tests: int_a_str
+|   +-- test_correlation.py         # Unit tests: comparar_correlaciones
+|   +-- test_connection_api.py      # Unit tests: llamada_api (mock)
 +-- files/
 |   +-- data_raw/                  # CSVs extraídos (sin transformar)
 |   +-- data_processed/            # CSVs transformados y limpios
