@@ -1,9 +1,11 @@
 import logging
 
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 
 
-def int_a_str(df, lista_columnas):
+def int_a_str(df: pd.DataFrame, lista_columnas: list[str]) -> pd.DataFrame:
     """
     Transforma multiples columnas a str en un solo DataFrame.
     """

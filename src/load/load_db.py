@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import os
+
 import pandas as pd
 from sqlalchemy import create_engine, text
 import logging
 
 logger = logging.getLogger(__name__)
 
-def get_connection_string(db_name=None, user=None, password=None, host=None, port=None):
+def get_connection_string(db_name: str | None = None, user: str | None = None, password: str | None = None, host: str | None = None, port: str | None = None) -> str:
     """
     Centraliza la creación de la URL de forma dinámica.
     Resuelve problemas de importación y añade la barra de seguridad para SQLAlchemy.
@@ -22,7 +25,7 @@ def get_connection_string(db_name=None, user=None, password=None, host=None, por
 
 
 ## 1️⃣ Crear Base de Datos
-def create_database_if_not_exists(db_name):
+def create_database_if_not_exists(db_name: str) -> None:
     """Crea la base de datos si no existe usando la conexión por defecto."""
     connection_url = get_connection_string()
     engine_server = create_engine(connection_url)
@@ -36,7 +39,7 @@ def create_database_if_not_exists(db_name):
 
 
 ## 2️⃣ Cargar el DataFrame
-def load_dataframe_to_mysql(df, table_name, db_name, if_exists="replace"):
+def load_dataframe_to_mysql(df: pd.DataFrame, table_name: str, db_name: str, if_exists: str = "replace") -> None:
     """Carga un DataFrame pidiéndote solo los datos esenciales."""
     connection_url = get_connection_string(db_name=db_name)
     engine = create_engine(connection_url)
@@ -49,7 +52,7 @@ def load_dataframe_to_mysql(df, table_name, db_name, if_exists="replace"):
 
 
 ## 3️⃣ Definir la Clave Primaria
-def set_primary_key(table_name, pk_column, db_name, data_type="INT"):
+def set_primary_key(table_name: str, pk_column: str, db_name: str, data_type: str = "INT") -> None:
     """
     Asigna la PK en la tabla indicada. 
     Permite cambiar el tipo de dato (por defecto INT) por si tu clave es VARCHAR.
@@ -67,7 +70,7 @@ def set_primary_key(table_name, pk_column, db_name, data_type="INT"):
         engine.dispose()
 
 ## 4️⃣ Función para definir Claves Foráneas (Foreign Keys) - modelo estrella
-def set_foreign_keys(fact_table, relations, db_name):
+def set_foreign_keys(fact_table: str, relations: list[dict[str, str]], db_name: str) -> None:
     """
     Crea una o varias relaciones de clave foránea entre una tabla de hechos 
     y sus tablas de dimensión, típico de un modelo estrella.
@@ -125,7 +128,7 @@ def set_foreign_keys(fact_table, relations, db_name):
 
 
 ## 5️⃣ Agregar columna ID autoincremental
-def add_autoincrement_id(table_name, db_name):
+def add_autoincrement_id(table_name: str, db_name: str) -> None:
     """
     Agrega una columna autoincremental como PRIMARY KEY a una tabla existente.
     El nombre de la columna se genera automáticamente como 'id_{table_name}'.
@@ -162,7 +165,7 @@ def add_autoincrement_id(table_name, db_name):
 
 
 # 6️⃣ Eliminar todas las tablas
-def drop_all_tables(db_name, tables):
+def drop_all_tables(db_name: str, tables: list[str]) -> None:
     """
     Elimina todas las tablas en orden inverso al de dependencias
     para respetar las FK. Si no existen, no falla.
