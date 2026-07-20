@@ -1,7 +1,7 @@
-﻿"""Pipeline principal de ejecuciÃ³n de notebooks ETL.
+﻿"""Pipeline principal de ejecución de notebooks ETL.
 
-Ejecuta secuencialmente los notebooks del pipeline de extracciÃ³n,
-transformaciÃ³n y carga de datos del proyecto Spain Business Resilience Analytics.
+Ejecuta secuencialmente los notebooks del pipeline de extracción,
+transformación y carga de datos del proyecto Spain Business Resilience Analytics.
 
 Uso:
     python run_pipeline.py
@@ -44,7 +44,7 @@ def ejecutar_notebook(nb_path: Path) -> None:
         nb_path: Ruta al archivo .ipynb a ejecutar.
 
     Raises:
-        Exception: Si la ejecuciÃ³n del notebook falla (timeout, error en celda, etc.).
+        Exception: Si la ejecución del notebook falla (timeout, error en celda, etc.).
     """
     with open(nb_path, encoding="utf-8") as f:
         nb = read(f, as_version=4)
@@ -59,8 +59,8 @@ def ejecutar_notebook(nb_path: Path) -> None:
 def main() -> None:
     """Ejecuta todos los notebooks del pipeline en orden secuencial.
 
-    Registra el tiempo total de ejecuciÃ³n y reporta Ã©xitos/fallos.
-    Termina con cÃ³digo de salida no-cero si algÃºn notebook falla.
+    Registra el tiempo total de ejecución y reporta éxitos/fallos.
+    Termina con código de salida no-cero si algún notebook falla.
     """
     inicio = time.time()
     ok = 0
@@ -77,9 +77,9 @@ def main() -> None:
         try:
             ejecutar_notebook(nb_path)
             ok += 1
-            logging.info(f"{nb_name} â†’ OK")
+            logging.info(f"{nb_name} OK")
         except Exception as e:
-            logging.error(f"{nb_name} â†’ FALLÃ“: {e}")
+            logging.error(f"{nb_name} FALLO: {e}")
             fallidos.append(nb_name)
 
     total = time.time() - inicio
