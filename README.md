@@ -132,4 +132,4 @@ Tablas de hechos adicionales:
 
 ## Licencia
 
-MIT
+CC BY-NC-SA 4.0
