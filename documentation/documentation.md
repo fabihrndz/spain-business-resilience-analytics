@@ -1,179 +1,397 @@
-# Documentación del Proyecto: Spain Business Resilience Analytics
+# Documentación Técnica: Spain Business Resilience Analytics
 
-## Módulo: `conexion_api.py`
+## Arquitectura general
 
-### Descripción
+El proyecto sigue un flujo ETL (Extract, Transform, Load):
 
-Módulo Python que encapsula las llamadas a la API JSON del INE. Proporciona una función única con logging y manejo de errores.
+1. **Extracción**: Datos de la API JSON del INE → CSVs en `files/data_raw/`
+2. **EDA y Transformación**: Limpieza, normalización, modelo dimensional → CSVs en `files/data_processed/`
+3. **Visualización y Análisis**: Gráficos, correlaciones
+4. **Carga**: CSVs → MySQL con esquema estrella
 
-### Función: `llamada_api(url)`
+---
+
+## Módulos `src/`
+
+### `api/connection_api.py`
+
+Funciones para conectarse a la API del INE con sistema de caché.
+
+#### `llamada_api(url: str) -> dict | list | None`
+
+Realiza una llamada a la API del INE con caché local.
 
 | Parámetro | Tipo | Descripción |
 |-----------|------|-------------|
-| `url` | `str` | URL completa del endpoint de la API del INE |
+| `url` | `str` | URL completa del endpoint de la API |
 
-**Retorno**: `dict | list | None` — Datos JSON parseados si la respuesta es 200, `None` en caso de error.
+**Retorno**: Datos JSON parseados o `None` en caso de error.
+
+**Comportamiento**:
+- Consulta caché en `files/cache/{table_id}.json`
+- Si no existe, realiza petición HTTP
+- Guarda resultado en caché para futuras llamadas
 
 **Logging**:
-- `INFO` — Inicio de llamada y código de estado recibido
-- `DEBUG` — Primeros 300 caracteres del payload (solo en éxito)
-- `WARNING` — Código de estado inesperado
-- `ERROR` — Timeout o error de conexión
+- `INFO`: Inicio de llamada y código de estado
+- `DEBUG`: Primeros 300 caracteres del payload
+- `WARNING`: Caché corrupto o estado inesperado
+- `ERROR`: Timeout o error de conexión
 
 **Errores manejados**:
 - `requests.exceptions.Timeout`
 - `requests.exceptions.RequestException`
 
-### Dependencias
+#### `_get_cache_path(url: str) -> str`
 
-- `requests`
-- `logging` (stdlib)
+Extrae el ID de tabla de la URL y devuelve la ruta al archivo de caché.
 
 ---
 
-## Notebook 01: `01_extraccion.ipynb` — IPC (Tabla 76136)
+### `api/config.py`
 
-### Fuente de datos
+Constantes de configuración de la API.
+
+```python
+INE_BASE_URL = "https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA"
+
+API_URLS = {
+    "ipc": f"{INE_BASE_URL}/76136?nlast=60&det=2",
+    "constituidas": f"{INE_BASE_URL}/13913",
+    "disueltas": f"{INE_BASE_URL}/13915",
+}
+```
+
+---
+
+### `transformation/trans_normal.py`
+
+#### `normalizar_col(col: str) -> str`
+
+Normaliza strings para nombres de columnas.
+
+**Proceso**:
+1. Elimina espacios al inicio/final, convierte a minúsculas
+2. Elimina acentos (NFKD + ASCII)
+3. Reemplaza espacios y guiones por guiones bajos
+4. Elimina caracteres especiales
+
+**Ejemplo**:
+```python
+normalizar_col("  Índice General - Variación  ")  # → "indice_general_variacion"
+```
+
+---
+
+### `transformation/trans_str.py`
+
+#### `int_a_str(df: pd.DataFrame, lista_columnas: list[str]) -> pd.DataFrame`
+
+Convierte columnas especificadas a tipo string.
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `df` | `pd.DataFrame` | DataFrame de entrada |
+| `lista_columnas` | `list[str]` | Nombres de columnas a convertir |
+
+**Logging**:
+- `INFO`: Columna convertida exitosamente
+- `WARNING`: Columna no encontrada en el DataFrame
+
+---
+
+### `load/load_db.py`
+
+Funciones para cargar datos en MySQL.
+
+#### `get_connection_string(...) -> str`
+
+Genera la URL de conexión a MySQL desde variables de entorno.
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `db_name` | `str \| None` | Nombre de la base de datos |
+| `user` | `str \| None` | Usuario (default: `DB_USER` env) |
+| `password` | `str \| None` | Password (default: `DB_PASSWORD` env) |
+| `host` | `str \| None` | Host (default: `DB_HOST` env) |
+| `port` | `str \| None` | Puerto (default: `3306`) |
+
+#### `create_database_if_not_exists(db_name: str) -> None`
+
+Crea la base de datos si no existe.
+
+#### `load_dataframe_to_mysql(df, table_name, db_name, if_exists="replace") -> None`
+
+Carga un DataFrame en una tabla MySQL.
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `df` | `pd.DataFrame` | Datos a cargar |
+| `table_name` | `str` | Nombre de la tabla destino |
+| `db_name` | `str` | Nombre de la base de datos |
+| `if_exists` | `str` | `"replace"`, `"append"` o `"fail"` |
+
+#### `set_primary_key(table_name, pk_column, db_name, data_type="INT") -> None`
+
+Define una columna como clave primaria.
+
+#### `set_foreign_keys(fact_table, relations, db_name) -> None`
+
+Crea relaciones de clave foránea (modelo estrella).
+
+```python
+relations = [
+    {"fk_column": "id_tiempo", "dimension_table": "tiempo"},
+    {"fk_column": "id_territorio", "dimension_table": "territorio"},
+]
+```
+
+#### `add_autoincrement_id(table_name, db_name) -> None`
+
+Agrega columna autoincremental como PK.
+
+#### `drop_all_tables(db_name, tables) -> None`
+
+Elimina tablas en orden inverso para respetar FKs.
+
+---
+
+### `correlation/correlation.py`
+
+Funciones de análisis de correlación.
+
+#### `comparar_correlaciones(df, var1_name, var2_name, umbral_diferencia=0.1, mostrar_plot=True) -> dict`
+
+Compara correlaciones Pearson y Spearman, recomienda la más adecuada.
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `df` | `pd.DataFrame` | DataFrame con las variables |
+| `var1_name` | `str` | Nombre de la primera columna |
+| `var2_name` | `str` | Nombre de la segunda columna |
+| `umbral_diferencia` | `float` | Umbral para recomendar Spearman (default: 0.1) |
+| `mostrar_plot` | `bool` | Mostrar scatter plot (default: True) |
+
+**Retorno**: dict con `pearson`, `spearman`, `diferencia`, `recomendacion`, `interpretacion`.
+
+**Lógica**:
+- Si diferencia < umbral → Pearson (relación lineal)
+- Si diferencia ≥ umbral → Spearman (outliers o no lineal)
+
+#### `matriz_correlacion_visual(df, metodo='pearson', ...) -> pd.DataFrame`
+
+Genera heatmap de matriz de correlación.
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `df` | `pd.DataFrame` | Variables numéricas |
+| `metodo` | `str` | `'pearson'`, `'spearman'` o `'kendall'` |
+| `solo_triangulo` | `bool` | Mostrar solo triángulo inferior (default: True) |
+
+---
+
+## Notebooks
+
+### 01_extraction_ipc.ipynb — IPC (Tabla 76136)
+
+**Fuente**: `https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/76136?nlast=60&det=2`
+
+**Proceso ETL**:
+1. Extrae series temporales de la API
+2. Cada serie tiene `Nombre` compuesto: `Territorio.Sector.TipoMedida`
+3. Construye dimensiones:
+   - `tiempo` (PK: `CodigoPeriodo` formato YYYYMM)
+   - `territorio` (IDs autoincrementales)
+   - `sectores_ipc`
+   - `tipo_medida`
+4. Construye tabla de hechos `ipc` con valores del índice
+
+**Archivos generados**: `tiempo.csv`, `territorio.csv`, `sectores_ipc.csv`, `tipo_medida.csv`, `ipc.csv`
+
+---
+
+### 02_extraction_constituidas.ipynb — Sociedades Constituidas (Tabla 13913)
+
+**Fuente**: `https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/13913`
+
+**Proceso**:
+1. Extrae datos de sociedades mercantiles constituidas
+2. Para cada serie, extrae nombre descriptivo y datos históricos
+3. Genera CSV con: `Nombre`, `FK_TipoDato`, `FK_Periodo`, `Anyo`, `Valor`, `Fecha`
+
+**Cobertura**: Enero 2002 – actualidad (mensual)
+
+**Datos destacables**:
+- Máximo: 16.165 (marzo 2007)
+- Mínimo: 386 (abril 2020, COVID-19)
+
+**Archivo generado**: `empresas_constituidas.csv`
+
+---
+
+### 03_extraction_disueltas.ipynb — Sociedades Disueltas (Tabla 13915)
+
+**Fuente**: `https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/13915`
+
+**Proceso**:
+1. Extrae datos de sociedades mercantiles disueltas
+2. 80 series disponibles por comunidad autónoma y tipo
+
+**Cobertura**: Enero 2002 – actualidad (mensual)
+
+**Datos destacables**:
+- Máximo: 4.157 (enero 2019)
+- Mínimo: 482 (mayo 2020, COVID-19)
+
+**Archivo generado**: `empresas_disueltas.csv`
+
+---
+
+### 04_eda.ipynb — Análisis Exploratorio de Datos
+
+Análisis estadístico descriptivo de los datasets:
+- Estadísticas básicas (media, mediana, desviación)
+- Distribuciones y histogramas
+- Detección de valores nulos y outliers
+- Análisis temporal de tendencias
+
+---
+
+### 05_transformation.ipynb — Transformación
+
+Proceso de limpieza y transformación:
+- Normalización de columnas con `normalizar_col()`
+- Conversión de tipos con `int_a_str()`
+- Unión de datasets
+- Creación del modelo dimensional
+
+---
+
+### 06_visualizations.ipynb — Visualizaciones
+
+Análisis visual:
+- Series temporales de IPC por territorio
+- Evolución de sociedades constituidas/disueltas
+- Comparativas entre comunidades autónomas
+- Mapas coropléticos con GeoJSON
+
+---
+
+### 07_correlation.ipynb — Análisis de Correlación
+
+Análisis de relaciones entre variables:
+- Correlación IPC vs empresas constituidas/disueltas
+- Comparación Pearson vs Spearman con `comparar_correlaciones()`
+- Matrices de correlación con `matriz_correlacion_visual()`
+
+---
+
+### 08_load.ipynb — Carga a MySQL
+
+Carga de datos transformados a base de datos:
+- Creación de base de datos con `create_database_if_not_exists()`
+- Carga de tablas con `load_dataframe_to_mysql()`
+- Definición de PKs con `set_primary_key()`
+- Creación de relaciones FK con `set_foreign_keys()`
+
+---
+
+## Modelo de datos
+
+Esquema estrella con tabla de hechos principal `ipc`:
+
+### Tabla de hechos: `ipc`
+
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `id_ipc` | INT AUTO_INCREMENT | PK |
+| `id_tiempo` | INT | FK → tiempo |
+| `id_territorio` | INT | FK → territorio |
+| `id_sector` | INT | FK → sectores_ipc |
+| `id_medida` | INT | FK → tipo_medida |
+| `valor_ipc` | FLOAT | Valor del índice |
+
+### Dimensiones
+
+| Tabla | PK | Descripción |
+|-------|-----|-------------|
+| `tiempo` | `id_tiempo` | Periodos mensuales (YYYYMM) |
+| `territorio` | `id_territorio` | Comunidades autónomas |
+| `sectores_ipc` | `id_sector` | Sectores económicos del IPC |
+| `tipo_medida` | `id_medida` | General, variación, etc. |
+
+### Tablas de hechos adicionales
+
+- `empresas_constituidas` — Creación de empresas por mes y territorio
+- `empresas_disueltas` — Disolución de empresas por mes y territorio
+
+### Relaciones FK
 
 ```
-https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/76136?nlast=60&det=2
+ipc.id_tiempo      → tiempo.id_tiempo
+ipc.id_territorio  → territorio.id_territorio
+ipc.id_sector      → sectores_ipc.id_sector
+ipc.id_medida      → tipo_medida.id_medida
 ```
 
-### Proceso ETL
+---
 
-1. **Extracción**: Llama a la API del INE con el módulo `conexion_api` y obtiene una lista de series temporales. Cada serie tiene un `Nombre` compuesto por tres partes separadas por punto: `Territorio.Sector.TipoMedida`.
+## Tests
 
-2. **Construcción de dimensiones**:
-   - **`tiempo`**: Extrae `CodigoPeriodo`, `Anyo`, `Mes_inicio` y `Nombre_largo` del mes desde cada punto de datos. Usa `CodigoPeriodo` como clave primaria (formato `YYYYMM`).
-   - **`territorio`**: Toma la primera parte del nombre de la serie (ej: `Total Nacional`, `Andalucía`). Asigna IDs autoincrementales.
-   - **`sectores_ipc`**: Toma la segunda parte del nombre (ej: `Índice General`, `Alimentos`). Asigna IDs autoincrementales.
-   - **`tipo_medida`**: Toma la tercera parte del nombre (ej: `General`, `Variación anual`). Asigna IDs autoincrementales.
+### `conftest.py`
 
-3. **Construcción de la tabla de hechos `ipc`**:
-   - Para cada serie, recorre todos sus puntos `Data`.
-   - Mapea el nombre del territorio a su ID (con corrección: `Nacional` → `Total Nacional`).
-   - Combina `id_tiempo`, `id_territorio`, `id_sector`, `id_medida` y `valor_ipc`.
+Fixtures que cargan CSVs desde `files/data_processed/`:
+- `df_tiempo`, `df_territorio`, `df_sectores_ipc`, `df_tipo_medida`
+- `df_ipc`, `df_empr_const`, `df_empr_dis`
 
-
-### Archivos generados
+### Tests de validación
 
 | Archivo | Descripción |
 |---------|-------------|
-| `tiempo.csv` | Dimensión temporal (periodos mensuales) |
-| `territorio.csv` | Dimensión geográfica (comunidades autónomas + total nacional) |
-| `sectores_ipc.csv` | Dimensión de sectores económicos del IPC |
-| `tipo_medida.csv` | Dimensión de tipos de medida (general, variación, etc.) |
-| `ipc.csv` | Tabla de hechos con valores del IPC |
+| `test_types.py` | Valida tipos de datos de columnas |
+| `test_ranges.py` | Valida rangos de valores numéricos |
+| `test_duplicates.py` | Detecta duplicados en tablas |
+| `test_fk_integrity.py` | Verifica integridad referencial |
+
+### Tests unitarios
+
+| Archivo | Función testada |
+|---------|-----------------|
+| `test_trans_normal.py` | `normalizar_col()` |
+| `test_trans_str.py` | `int_a_str()` |
+| `test_correlation.py` | `comparar_correlaciones()` |
+| `test_connection_api.py` | `llamada_api()` (con mock) |
 
 ---
 
-## Notebook 02: `02_extracion.ipynb` — Sociedades Constituidas (Tabla 13913)
+## Configuración
 
-### Fuente de datos
+### Variables de entorno (`.env`)
 
 ```
-https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/13913
+DB_USER=root
+DB_PASSWORD=tu_password
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=ipc_analisis_empresarial
 ```
 
-### Proceso
+### Caché de API
 
-1. Llama a la API del INE para obtener datos de **sociedades mercantiles constituidas** (creadas).
-2. Para cada serie, extrae el nombre descriptivo (territorio y tipo) y recorre todos los datos históricos.
-3. Genera el archivo `empresas_constituidas.csv` con estructura:
-   - `Nombre` — descripción de la serie (ej: `Andalucía. Sociedades Constituídas. Mercantiles. Número de Sociedades.`)
-   - `FK_TipoDato` — tipo de dato (1: provisional, 2: estimación)
-   - `FK_Periodo` — número de mes
-   - `Anyo` — año
-   - `Valor` — número de sociedades constituidas
-   - `Fecha` — timestamp UNIX en milisegundos
-
-### Cobertura temporal
-
-Desde **enero de 2002** hasta la actualidad (2026), con datos mensuales.
-
-### Datos destacables
-
-- Máximo histórico en marzo de 2007: **16.165** sociedades constituidas en un mes
-- Mínimo en abril de 2020 (COVID-19): **386** sociedades constituidas
-- Promedio mensual aprox. 8.000–10.000 sociedades
-
-### Archivos generados
-
-| Archivo | Descripción |
-|---------|-------------|
-| `empresas_constituidas.csv` | Creación de empresas por mes y territorio
+Las llamadas a la API se almacenan en `files/cache/` como archivos JSON. El nombre del archivo corresponde al ID de la tabla INE (ej: `76136.json`).
 
 ---
 
-## Notebook 03: `03_extraccion.ipynb` — Sociedades Disueltas (Tabla 13915)
+## Diccionario de datos
 
-### Fuente de datos
-
-```
-https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/13915
-```
-
-### Proceso
-
-1. Llama a la API del INE para obtener datos de **sociedades mercantiles disueltas**.
-2. Para cada serie (80 series disponibles por comunidad autónoma y tipo), extrae los datos y los imprime en formato estructurado.
-3. **Estructura de los datos**: `Nombre, FK_TipoDato, FK_Periodo, Anyo, Valor`
-   - Ejemplo: `Total. Disueltas. Número de Sociedades. Mercantiles. Total Nacional., 1, 4, 2026, 2064.0`
-
-### Cobertura temporal
-
-Desde **enero de 2002** hasta la actualidad (2026), con datos mensuales.
-
-### Datos destacables
-
-- Máximo en enero de 2019: **4.157** sociedades disueltas
-- Mínimo en mayo de 2020 (COVID-19): **482** sociedades disueltas (anomalía a la baja por restricciones)
-- Tendencia general: 1.500–2.500 disoluciones mensuales en los últimos años
-
-### Archivos generados
-
-| Archivo | Descripción |
-|---------|-------------|
-| `empresas_disueltas.csv` |Disolución de empresas por mes y territorio
+Para el diccionario completo de campos, consulta [dictionary.md](dictionary.md).
 
 ---
-## Stack Tecnológico
 
-| Componente | Versión |
-|------------|---------|
-| Python | 3.12 |
-| pandas | Última estable |
-| requests | Última estable |
-| Jupyter Notebook | Última estable |
-| API INE | REST JSON (wstempus) |
+## Fuentes de datos
 
-## Instalación
-
-```bash
-pip install pandas requests jupyter
-```
-
-## Uso
-
-Ejecutar los notebooks en orden secuencial:
-
-```bash
-jupyter notebook 01_extraccion.ipynb      # IPC - modelo dimensional
-jupyter notebook 02_extracion.ipynb       # Sociedades constituidas
-jupyter notebook 03_extraccion.ipynb      # Sociedades disueltas
-jupyter notebook 04_eda.ipynb             # Realización EDA
-jupyter notebook 05_transformation.ipynb  # Transformación datasets
-jupyter notebook 06_visualizations.ipynb  # Análisis de visualizaciones
-jupyter notebook 07_correlation.ipynb     # Análisis correlación
-jupyter notebook 08_load.ipynb            # Carga datasets a MySQL
-```
-
-Los archivos CSV se generan automáticamente en el directorio raíz del proyecto.
-
-## Fuentes de Datos
-
-- **API JSON del INE**: https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/
-- **Tabla 76136**: Índice de Precios al Consumo (IPC) — series por territorio y sector
+- **API JSON del INE**: `https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/`
+- **Documentación API**: `https://www.ine.es/dyngs/ODE/es/index.htm`
+- **Tabla 76136**: IPC por territorio y sector
 - **Tabla 13913**: Sociedades mercantiles constituidas
 - **Tabla 13915**: Sociedades mercantiles disueltas
-- **Documentación API**: https://www.ine.es/dyngs/ODE/es/index.htm
