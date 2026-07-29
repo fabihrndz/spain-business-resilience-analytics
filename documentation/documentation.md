@@ -337,6 +337,14 @@ ipc.id_medida      → tipo_medida.id_medida
 
 ## Tests
 
+Los tests se ejecutan con `pytest tests/ -v`. Los datos de prueba se generan automáticamente mediante:
+
+```bash
+python scripts/generate_test_data.py
+```
+
+Esto crea CSVs dummy en `files/data_processed/` sin necesidad de llamar a la API del INE ni tener MySQL instalado.
+
 ### `conftest.py`
 
 Fixtures que cargan CSVs desde `files/data_processed/`:
@@ -378,6 +386,49 @@ DB_NAME=ipc_analisis_empresarial
 ### Caché de API
 
 Las llamadas a la API se almacenan en `files/cache/` como archivos JSON. El nombre del archivo corresponde al ID de la tabla INE (ej: `76136.json`).
+
+---
+
+## CI/CD — Integración Continua
+
+El proyecto utiliza **GitHub Actions** para ejecutar linting y tests automáticamente en cada push a `main` y cada pull request.
+
+**Archivo**: `.github/workflows/ci.yml`
+
+**Pasos del pipeline**:
+1. Instala Python 3.12 y las dependencias del proyecto
+2. Genera datos de prueba con `scripts/generate_test_data.py`
+3. Ejecuta Ruff (linter) sobre `src/` y `tests/`
+4. Ejecuta `pytest` con cobertura sobre `src/`
+
+El badge de estado del CI se encuentra en la cabecera del `README.md`.
+
+---
+
+## Herramientas de desarrollo
+
+### Ruff (linter y formateador)
+
+Configurado en `pyproject.toml`. Detecta errores de estilo, imports sin usar, docstrings faltantes y sintaxis moderna.
+
+```bash
+ruff check src/ tests/          # Analiza el código
+ruff check src/ tests/ --fix    # Corrige automáticamente
+ruff format src/                # Formatea el código
+```
+
+### Pre-commit hooks
+
+Configurado en `.pre-commit-config.yaml`. Ejecuta Ruff automáticamente antes de cada `git commit`:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+### Script de datos de prueba
+
+`scripts/generate_test_data.py` genera datos dummy deterministas en `files/data_processed/` para que los tests funcionen sin conexión a la API del INE ni a MySQL.
 
 ---
 

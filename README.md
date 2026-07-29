@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white)
 ![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626?style=flat&logo=jupyter&logoColor=white)
-![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)
+![License](https://img.shields.io/badge/License-CC%20BY-NC-SA%204.0-lightgrey)
 ![CI](https://github.com/fabihrndz/spain-business-resilience-analytics/actions/workflows/ci.yml/badge.svg)
 
 Análisis de la resiliencia empresarial en España mediante datos del INE (IPC, sociedades constituidas y disueltas) utilizando un modelo dimensional en esquema estrella.
@@ -62,6 +62,11 @@ pytest tests/ -v
 
 ```
 spain-business-resilience-analytics/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # CI/CD: lint + tests automáticos
+├── scripts/
+│   └── generate_test_data.py      # Genera datos dummy para tests
 ├── src/                           # Módulos Python reutilizables
 │   ├── api/
 │   │   ├── connection_api.py      # Conexión a la API del INE con caché
@@ -99,12 +104,13 @@ spain-business-resilience-analytics/
 ├── data_base/
 │   └── BBDD_spanish_ipc_analitic2.sql
 ├── documentation/
-│   ├── documentation_v2.md        # Documentación técnica completa
-│   ├── Conclusiones_EDA1_ETL.md   # Conclusiones del EDA
+│   ├── documentation.md           # Documentación técnica completa
 │   └── dictionary.md              # Diccionario de datos
 ├── topojson/
 │   └── provincias_spain.geojson   # Mapa de provincias
 ├── dashboard_power_bi.pbix        # Dashboard en Power BI
+├── pyproject.toml                 # Configuración de Ruff (linter)
+├── .pre-commit-config.yaml        # Hooks de pre-commit
 ├── requirements.txt               # Dependencias del proyecto
 ├── run_pipeline.py                # Ejecutor del pipeline completo
 ├── CHANGELOG.md                   # Historial de cambios
@@ -114,7 +120,7 @@ spain-business-resilience-analytics/
 
 ## Documentación técnica
 
-Para detalles completos sobre módulos, notebooks, modelo de datos y tests, consulta [documentation_v2.md](documentation/documentation_v2.md).
+Para detalles completos sobre módulos, notebooks, modelo de datos y tests, consulta [documentation.md](documentation/documentation.md).
 
 ## Licencia
 
@@ -124,7 +130,7 @@ CC BY-NC-SA 4.0
 
 | Miembro | Rol | LinkedIn |
 |---------|-----|----------|
-| Fabiola Hernández | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](www.linkedin.com/in/fabiola-hernández-lorenzo) |
-| Dácil Maria Correa | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](www.linkedin.com/in/dácil-maría-correa) |
-| Lourdes Moya | Data Engineer | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](www.linkedin.com/in/lourdes-moya) |
+| Fabiola Hernández | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/fabiola-hernández-lorenzo) |
+| Dácil Maria Correa | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/dácil-maría-correa) |
+| Lourdes Moya | Data Engineer | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/lourdes-moya) |
 | Sara Guzmán López | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sara-guzman-lopez/) |
