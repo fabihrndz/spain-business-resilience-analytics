@@ -1,7 +1,12 @@
-import pytest
+"""Fixtures compartidos para todos los tests del proyecto.
+
+Carga los DataFrames desde files/data_processed/ para usarlos
+en las pruebas de validación (tipos, rangos, duplicados, FKs).
+"""
 
 import pandas as pd
- 
+import pytest
+
 DATA_DIR = "files/data_processed"
  
 @pytest.fixture

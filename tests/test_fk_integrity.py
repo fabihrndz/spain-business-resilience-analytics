@@ -1,4 +1,9 @@
-import pytest
+"""Tests de integridad referencial entre tablas del modelo estrella.
+
+Verifica que todos los valores FK en tablas de hechos tengan
+su correspondiente registro en las tablas de dimensión.
+"""
+
  
  
 def test_fk_ipc_tiempo(df_ipc, df_tiempo):

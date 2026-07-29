@@ -1,11 +1,13 @@
 """Unit tests para las funciones del modulo correlation.py."""
 
-import sys
 import os
-import pytest
-import pandas as pd
-import numpy as np
+import sys
+
 import matplotlib
+import numpy as np
+import pandas as pd
+import pytest
+
 matplotlib.use("Agg")
 from unittest.mock import patch
 

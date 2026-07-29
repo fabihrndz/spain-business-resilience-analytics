@@ -1,4 +1,8 @@
-# src/api/config.py
+"""Configuración de endpoints de la API del INE.
+
+Define las URLs base y los endpoints específicos para las tablas
+de IPC, sociedades constituidas y disueltas.
+"""
 
 INE_BASE_URL = "https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA"
  

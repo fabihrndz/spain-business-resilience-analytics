@@ -1,14 +1,13 @@
 """Unit tests para las funciones del modulo connection_api.py."""
 
-import sys
-import os
 import json
+import os
+import sys
 import tempfile
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from api.connection_api import _get_cache_path, llamada_api, CACHE_DIR
+from api.connection_api import CACHE_DIR, _get_cache_path, llamada_api
 
 
 class TestGetCachePath:
@@ -68,7 +67,7 @@ class TestLlamadaApi:
                 )
                 cache_file = os.path.join(tmpdir, "99999.json")
                 assert os.path.exists(cache_file)
-                with open(cache_file, "r", encoding="utf-8") as f:
+                with open(cache_file, encoding="utf-8") as f:
                     contenido = json.load(f)
                 assert contenido == datos
 

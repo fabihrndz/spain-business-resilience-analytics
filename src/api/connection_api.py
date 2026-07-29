@@ -5,10 +5,10 @@ Nacional de Estadística, con sistema de caché local para evitar
 solicitudes repetidas.
 """
 
-import os
 import json
-import re
 import logging
+import os
+import re
 from typing import Any
 
 import requests
@@ -26,6 +26,7 @@ def _get_cache_path(url: str) -> str:
 
     Returns:
         Ruta completa al archivo JSON de caché.
+
     """
     match = re.search(r"/DATOS_TABLA/(\d+)", url)
     nombre = match.group(1) if match else "unknown"
@@ -44,6 +45,7 @@ def llamada_api(url: str) -> dict[str, Any] | list[Any] | None:
     Returns:
         Datos JSON parseados (dict o list) si la respuesta es 200,
         None en caso de error o timeout.
+
     """
     cache_path = _get_cache_path(url)
 
@@ -51,9 +53,9 @@ def llamada_api(url: str) -> dict[str, Any] | list[Any] | None:
     if os.path.exists(cache_path):
         logger.info(f"Usando caché: {cache_path}")
         try:
-            with open(cache_path, "r", encoding="utf-8") as f:
+            with open(cache_path, encoding="utf-8") as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             logger.warning(f"Caché corrupto, se descargará de nuevo: {cache_path}")
 
     # Llamada real a la API

@@ -1,4 +1,9 @@
-import pytest
+"""Tests de rangos y valores válidos en columnas numéricas y temporales.
+
+Valida que meses, años, ids y valores numéricos estén dentro
+de los límites esperados.
+"""
+
 
 import numpy as np
  

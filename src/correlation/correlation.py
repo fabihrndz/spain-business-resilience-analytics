@@ -1,14 +1,21 @@
-import pandas as pd
-import numpy as np
+"""Funciones de análisis de correlación para el proyecto.
+
+Proporciona:
+  - comparar_correlaciones: compara Pearson y Spearman y recomienda el más adecuado.
+  - matriz_correlacion_visual: genera heatmaps de matrices de correlación.
+"""
+
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
- 
- 
+
+
 def comparar_correlaciones(df, var1_name, var2_name, umbral_diferencia=0.1, mostrar_plot=True):
     """
     Calcula correlaciones Pearson y Spearman usando pandas, las compara y recomienda cuál usar.
+
     Pandas maneja automáticamente los valores NaN.
-   
+    
     Parámetros:
     -----------
     df : pandas DataFrame
@@ -32,7 +39,6 @@ def comparar_correlaciones(df, var1_name, var2_name, umbral_diferencia=0.1, most
         - 'valor_recomendado': el valor del coeficiente recomendado
         - 'interpretacion': texto explicativo
     """
-   
     # Verificar que las columnas existen
     if var1_name not in df.columns or var2_name not in df.columns:
         raise ValueError(f"Las columnas '{var1_name}' y/o '{var2_name}' no existen en el DataFrame")
@@ -152,7 +158,6 @@ def matriz_correlacion_visual(df, metodo='pearson', figsize=(15, 15), cmap='mako
     df_correlaciones : pandas DataFrame
         Matriz de correlación calculada
     """
-   
     # Calcular la matriz de correlación
     df_correlaciones = df.corr(method=metodo, numeric_only=True)
    

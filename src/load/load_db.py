@@ -1,16 +1,23 @@
+"""Carga de datos transformados a MySQL con SQLAlchemy.
+
+Centraliza la conexión a la base de datos y proporciona
+operaciones CRUD sobre tablas: creación, carga, PKs, FKs y borrado.
+"""
+
 from __future__ import annotations
 
+import logging
 import os
 
 import pandas as pd
 from sqlalchemy import create_engine, text
-import logging
 
 logger = logging.getLogger(__name__)
 
 def get_connection_string(db_name: str | None = None, user: str | None = None, password: str | None = None, host: str | None = None, port: str | None = None) -> str:
     """
     Centraliza la creación de la URL de forma dinámica.
+
     Resuelve problemas de importación y añade la barra de seguridad para SQLAlchemy.
     """
     # Evaluación dinámica: si es None, va a buscarlo al entorno en este instante
@@ -24,7 +31,7 @@ def get_connection_string(db_name: str | None = None, user: str | None = None, p
     return f"mysql+pymysql://{user}:{password}@{host}:{port}/"
 
 
-## 1️⃣ Crear Base de Datos
+## 1️. Crear Base de Datos
 def create_database_if_not_exists(db_name: str) -> None:
     """Crea la base de datos si no existe usando la conexión por defecto."""
     connection_url = get_connection_string()
@@ -38,7 +45,7 @@ def create_database_if_not_exists(db_name: str) -> None:
         engine_server.dispose()
 
 
-## 2️⃣ Cargar el DataFrame
+## 2️. Cargar el DataFrame
 def load_dataframe_to_mysql(df: pd.DataFrame, table_name: str, db_name: str, if_exists: str = "replace") -> None:
     """Carga un DataFrame pidiéndote solo los datos esenciales."""
     connection_url = get_connection_string(db_name=db_name)
@@ -51,10 +58,11 @@ def load_dataframe_to_mysql(df: pd.DataFrame, table_name: str, db_name: str, if_
         engine.dispose()
 
 
-## 3️⃣ Definir la Clave Primaria
+## 3️. Definir la Clave Primaria
 def set_primary_key(table_name: str, pk_column: str, db_name: str, data_type: str = "INT") -> None:
     """
-    Asigna la PK en la tabla indicada. 
+    Asigna la PK en la tabla indicada.
+
     Permite cambiar el tipo de dato (por defecto INT) por si tu clave es VARCHAR.
     """
     connection_url = get_connection_string(db_name=db_name)
@@ -69,12 +77,10 @@ def set_primary_key(table_name: str, pk_column: str, db_name: str, data_type: st
     finally:
         engine.dispose()
 
-## 4️⃣ Función para definir Claves Foráneas (Foreign Keys) - modelo estrella
+## 4️. Función para definir Claves Foráneas (Foreign Keys) - modelo estrella
 def set_foreign_keys(fact_table: str, relations: list[dict[str, str]], db_name: str) -> None:
-    """
-    Crea una o varias relaciones de clave foránea entre una tabla de hechos 
-    y sus tablas de dimensión, típico de un modelo estrella.
-    
+    """Crea relaciones de clave foránea entre tablas (modelo estrella).
+
     Parámetros:
         fact_table (str): tabla que contiene las FKs (tabla de hechos).
         relations (list[dict]): lista de relaciones, cada una con:
@@ -127,10 +133,11 @@ def set_foreign_keys(fact_table: str, relations: list[dict[str, str]], db_name: 
         
 
 
-## 5️⃣ Agregar columna ID autoincremental
+## 5️. Agregar columna ID autoincremental
 def add_autoincrement_id(table_name: str, db_name: str) -> None:
     """
     Agrega una columna autoincremental como PRIMARY KEY a una tabla existente.
+
     El nombre de la columna se genera automáticamente como 'id_{table_name}'.
     Si la tabla ya tiene una PK, la elimina antes de asignar la nueva.
     """
@@ -164,11 +171,12 @@ def add_autoincrement_id(table_name: str, db_name: str) -> None:
 
 
 
-# 6️⃣ Eliminar todas las tablas
+# 6️. Eliminar todas las tablas
 def drop_all_tables(db_name: str, tables: list[str]) -> None:
     """
-    Elimina todas las tablas en orden inverso al de dependencias
-    para respetar las FK. Si no existen, no falla.
+    Elimina todas las tablas en orden inverso al de dependencias.
+
+    Para respetar las FK. Si no existen, no falla.
     """
     connection_url = get_connection_string(db_name=db_name)
     

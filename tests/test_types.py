@@ -1,4 +1,8 @@
-import pytest
+"""Tests de tipos de datos en todas las tablas del modelo dimensional.
+
+Verifica que cada columna tenga el tipo de dato esperado (int, float, string).
+"""
+
 import pandas as pd
  
  

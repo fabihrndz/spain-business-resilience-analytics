@@ -34,7 +34,6 @@ Realiza una llamada a la API del INE con caché local.
 
 **Logging**:
 - `INFO`: Inicio de llamada y código de estado
-- `DEBUG`: Primeros 300 caracteres del payload
 - `WARNING`: Caché corrupto o estado inesperado
 - `ERROR`: Timeout o error de conexión
 

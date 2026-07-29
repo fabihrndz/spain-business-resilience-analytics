@@ -1,4 +1,9 @@
-import pytest
+"""Tests de detección de duplicados en tablas del modelo dimensional.
+
+Verifica que las claves primarias y combinaciones de columnas
+no tengan valores duplicados.
+"""
+
  
  
 def test_duplicates_tiempo(df_tiempo):
