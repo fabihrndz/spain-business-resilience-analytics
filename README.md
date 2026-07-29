@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white)
 ![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626?style=flat&logo=jupyter&logoColor=white)
 ![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)
-![CI](https://github.com/tu-usuario/spain-business-resilience-analytics/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/fabihrndz/spain-business-resilience-analytics/actions/workflows/ci.yml/badge.svg)
 
 Análisis de la resiliencia empresarial en España mediante datos del INE (IPC, sociedades constituidas y disueltas) utilizando un modelo dimensional en esquema estrella.
 
@@ -119,3 +119,12 @@ Para detalles completos sobre módulos, notebooks, modelo de datos y tests, cons
 ## Licencia
 
 CC BY-NC-SA 4.0
+
+## Equipo
+
+| Miembro | Rol | LinkedIn |
+|---------|-----|----------|
+| Fabiola Hernández | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](www.linkedin.com/in/fabiola-hernández-lorenzo) |
+| Dácil Maria Correa | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](www.linkedin.com/in/dácil-maría-correa) |
+| Lourdes Moya | Data Engineer | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](www.linkedin.com/in/lourdes-moya) |
+| Sara Guzmán López | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sara-guzman-lopez/) |
