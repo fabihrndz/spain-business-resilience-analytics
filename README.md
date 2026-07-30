@@ -7,6 +7,9 @@
 
 Análisis de la resiliencia empresarial en España mediante datos del INE (IPC, sociedades constituidas y disueltas) utilizando un modelo dimensional en esquema estrella.
 
+![Panorama Empresarial en España](https://github.com/user-attachments/assets/93854c71-061c-4777-b27e-b67674fa0d17)
+
+
 ## Fuentes de datos
 
 | Dataset | Tabla INE | Descripción |
@@ -130,7 +133,7 @@ CC BY-NC-SA 4.0
 
 | Miembro | Rol | LinkedIn |
 |---------|-----|----------|
-| Fabiola Hernández | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/fabiola-hernández-lorenzo) |
+| Fabiola Hernández | Data Engineer | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/fabiola-hernández-lorenzo) |
 | Dácil Maria Correa | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/dácil-maría-correa) |
 | Lourdes Moya | Data Engineer | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/lourdes-moya) |
 | Sara Guzmán López | Data Analyst | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sara-guzman-lopez/) |

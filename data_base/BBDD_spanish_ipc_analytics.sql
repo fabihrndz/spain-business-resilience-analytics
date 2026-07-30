@@ -1,8 +1,6 @@
 use ipc_analisis_empresarial;
 
-
-
--- ✅ 1) Query que nos informa de fechas maxima y minima que tenemos para estos datos.
+-- 1) Query que nos devuelve de fechas máxima y mínima que tenemos para estos datos.
 
 SELECT 
     MIN(id_tiempo) AS fecha_minima, 
@@ -10,8 +8,7 @@ SELECT
 FROM empresas_constituidas; -- enero de 2008 a abril de 2026
 
 
-
--- ✅ 2)Total empresas creadas , disueltas y total capital invertido en el total de tiempo
+-- 2)Query que nos devuelve del total de empresas creadas , disueltas y total capital invertido en el total de tiempo.
 
 SELECT SUM(c.numero_sociedades) AS total_empresas_creadas,
 (SELECT SUM(numero_sociedades) FROM empresas_disueltas) AS total_empresas_disuelta,
@@ -20,7 +17,7 @@ FROM empresas_constituidas c;
 
 
 
--- ✅ 3) 10 años que mas empresas se crearon
+-- 3) Query que nos devuelve los 10 años que más empresas se crearon
 SELECT  
     LEFT(id_tiempo, 4) AS anio, 
     SUM(numero_sociedades) AS total_empresas_creadas
@@ -31,7 +28,7 @@ LIMIT 10;
 
 
 
--- ✅ 4) 10 años que mas empresas se disolvieron y motivo
+-- 4) Query que nos devuelve los 10 años que más empresas se disolvieron y motivo
 
 SELECT  
     LEFT(id_tiempo, 4) AS anio, 
@@ -44,20 +41,20 @@ LIMIT 10; -- 2025 (curiosamente igual que creadas) y por motivo Voluntario
 
 
 
---  ✅ 5)Cuantas empresas son disueltas por Año,Mes, Territorio; Razon Social, ipc mes actual, ipc 3 meses anteriores (lag), nº total empresas disueltas
+--  5) Query que nos devuelve cuántas empresas son disueltas por Año, Mes, Territorio; Razón Social, ipc mes actual, ipc 3 meses anteriores (lag), nº total empresas disueltas
 
 SELECT t.anio,t.nombre_mes AS mes,
 terr.nombre_territorio AS territorio,
 sub.razon_disolucion,
 sub.ipc_mes_actual,
--- PROMEDIO MÓVIL: Calcula la media del IPC del mes actual y los 2 meses anteriores
+-- Calcula la media del IPC del mes actual y los 2 meses anteriores
 	ROUND(AVG(sub.ipc_mes_actual) OVER(
 		PARTITION BY sub.id_territorio, sub.razon_disolucion 
 		ORDER BY t.anio, t.mes 
 		ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS ipc_tendencia_3meses, -- (lag 3 meses)
 sub.total_empresas_disueltas
 FROM (
-		-- Subconsulta para limpiar y agrupar por mes, territorio y la RAZÓN del cierre
+		-- Subconsulta para limpiar y agrupar por mes, territorio y la razón del cierre
 		SELECT d.id_tiempo,d.id_territorio,d.razon AS razon_disolucion,
 			AVG(i.valor_ipc) AS ipc_mes_actual,
 			SUM(d.numero_sociedades) AS total_empresas_disueltas
@@ -72,11 +69,11 @@ FROM (
 		JOIN tiempo t ON sub.id_tiempo = t.id_tiempo
 		JOIN territorio terr ON sub.id_territorio = terr.id_territorio
 		ORDER BY t.anio DESC, t.mes DESC, terr.nombre_territorio, sub.total_empresas_disueltas DESC;
-		 -- no es concluyente que el IPC sea la razon de la quiebra ya que el IPC no hace que una empresa cierre de forma inmediata
+		 -- no es concluyente que el IPC sea la razón de la quiebra ya que el IPC no hace que una empresa cierre de forma inmediata
 
 
 
--- ✅ 6) Por Año, Mes  y Territorio ; ipc, empresas constituidas, empresas disueltas y % disolucion
+-- 6) Query que nos devuelve por Año, Mes  y Territorio ; ipc, empresas constituidas, empresas disueltas y % disolución
 
 WITH metricas_empresas AS (
 SELECT c.id_tiempo,c.id_territorio,
@@ -105,9 +102,9 @@ GROUP BY c.id_tiempo, c.id_territorio
 
 
 
- /* ✅ 7)  Esta query clasifica el IPC por rangos de impacto (Deflación, Estable, Moderada, Alta) 
- y te dice el promedio de empresas creadas y disueltas en cada escenario. 
- Ideal para ver bajo qué niveles de inflación sufre más el tejido empresarial.*/
+ /* 7)  Esta query clasifica el IPC por rangos de impacto (Deflación, Estable, Moderada, Alta) 
+ y devuelve el promedio de empresas creadas y disueltas en cada escenario. 
+ Comprobamos qué niveles de inflación sufre más el tejido empresarial.*/
  
  SELECT 
     resumen.escenario_inflacion,
@@ -116,7 +113,6 @@ GROUP BY c.id_tiempo, c.id_territorio
     ROUND(AVG(resumen.total_disueltas), 0) AS promedio_empresas_disueltas,
     ROUND(AVG(resumen.total_constituidas) - AVG(resumen.total_disueltas), 0) AS balance_neto_promedio
 FROM ( SELECT i.id_tiempo,i.id_territorio,
-        -- ADAPTADO: Suponiendo que tus datos están expresados en base 100 (Ej: 102.5 = 2.5% inflación)
         CASE 
             WHEN i.valor_ipc < 100 THEN '1. Deflación / Bajada de precios'
             WHEN i.valor_ipc BETWEEN 100 AND 102.0 THEN '2. Inflación Estable (Objetivo)'
@@ -140,13 +136,13 @@ FROM ( SELECT i.id_tiempo,i.id_territorio,
 		WHERE i.id_medida = 1 ) resumen
 	GROUP BY resumen.escenario_inflacion
 	ORDER BY resumen.escenario_inflacion;
-/* nos llama la atencion que la inflaccion excesiva no es lo mas concluyente para la disoluccion de la empresa,
-ya que cuando hay momento crisis con un IPC superior al 105 no es el dato mas alto para disolucion de empresas,
-sino que cuando mas empresas se disuelve es en el momento de Infalccion estable o alta*/
+/* nos llama la atención que la inflacción excesiva no es lo más concluyente para la disolución de la empresa,
+ya que cuando hay momento crisis con un IPC superior al 105 no es el dato más alto para disolución de empresas,
+sino que cuando más empresas se disuelven es en el momento de Inflación estable o alta*/
 
 
 
--- ✅  8) Analisis capital invertido vs quiebras, teniendo en cuenta el IPC
+--  8) Análisis capital invertido vs quiebras, teniendo en cuenta el IPC
 /*Esta query analiza si en los meses con mayor variación de IPC el capital medio con el que se fundan las empresas disminuye (por incertidumbre económica)
  y si eso coincide con un mayor volumen de cierres empresariales en el mismo periodo.*/
  
@@ -180,7 +176,7 @@ SELECT t.anio, t.nombre_mes AS mes,
 
 
 
---  ✅ 10) Minimo y maximo de cada año y mes y comunidad autonoma de ipc
+-- 9) Query que nos devuelve el mínimo y máximo de cada año y mes y comunidad autónoma de IPC
 
 SELECT t.anio,'MÁXIMO' AS tipo,
 		t.nombre_mes AS mes,
@@ -189,8 +185,7 @@ SELECT t.anio,'MÁXIMO' AS tipo,
 FROM ipc i
 		JOIN tiempo t ON i.id_tiempo = t.id_tiempo
 		JOIN territorio terr ON i.id_territorio = terr.id_territorio
-		-- Cruzamos directamente con los máximos ya precalculados por año
-		JOIN (SELECT t2.anio, MAX(i2.valor_ipc) AS max_ipc
+		JOIN (SELECT t2.anio, MAX(i2.valor_ipc) AS max_ipc -- Cruzamos directamente con los máximos ya precalculados por año
 			FROM ipc i2
 			JOIN tiempo t2 ON i2.id_tiempo = t2.id_tiempo
 			WHERE i2.id_medida = 1
